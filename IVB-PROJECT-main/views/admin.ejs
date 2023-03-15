@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administrator</title>
+</head>
+<body>
+<canvas id="canvas" style="border: 2px solid black;">Your Browser Does Not Support Canvas </canvas>
+<div style="height :50px;width:50px;display:inline-block;margin: 5px;background-color:black;" onclick="change('black')"></div>
+<div style="height :50px;width:50px;display:inline-block;margin: 5px;background-color:brown;" onclick="change('brown')"></div>   
+<div style="height :50px;width:50px;display:inline-block;margin: 5px;background-color:red;"onclick="change('red')" ></div>  
+<div style="height :50px;width:50px;display:inline-block;margin: 5px;background-color:blue;" onclick="change('blue')"></div>
+<div style="height :50px;width:50px;display:inline-block;margin: 5px;background-color:purple;" onclick="change('purple')"></div>
+<div style="height :50px;width:50px;display:inline-block;margin: 5px;background-color:green;" onclick="change('green')"></div>
+
+<div style="height :50px;width:50px;display:inline-block;margin: 5px;background-image: url('https://icon-library.com/images/eraser-icon/eraser-icon-28.jpg');background-size: 50px 50px; " onclick="change('white')"></div>
+
+<input type="range" max="20" min="1" oninput="changeWidth()" id="slider" value="3"><br>
+
+<script>
+        var canvas = document.getElementById("canvas");
+        var ctx =canvas.getContext("2d");
+let ws =new WebSocket("ws://localhost:5000");
+    
+canvas.height =window.innerHeight*0.7;
+canvas.width =window.innerWidth;
+
+
+        window.addEventListener("resize", ()=>{
+        canvas.height=window.innerHeight*0.7;
+        canvas.width=window.innerWidth;
+
+        })
+       let paint = false;
+ 
+       function startDraw()
+       {
+        paint=true;
+        var info={
+            width:ctx.lineWidth,
+            style:ctx.strokeStyle,
+            x:event.clientX,
+            y:event.clientY,
+            paint:1
+        }
+        ws.send(JSON.stringify(info));
+       }
+       function endDraw()
+       {
+        paint=false;
+        ctx.beginPath();
+        var info={
+            width:ctx.lineWidth,
+            style:ctx.strokeStyle,
+            x:event.clientX,
+            y:event.clientY,
+            paint:0
+        }
+        ws.send(JSON.stringify(info));
+       }
+
+       function draw(event)
+       {
+        if(!paint)
+        return;
+        ctx.lineCap='round'
+        ctx.lineTo(event.clientX,event.clientY);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(event.clientX,event.clientY);
+        var info={
+            width:ctx.lineWidth,
+            style:ctx.strokeStyle,
+            x:event.clientX,
+            y:event.clientY,
+            paint:2
+        }
+        ws.send(JSON.stringify(info));
+       }
+       function changeWidth()
+       {
+        ctx.lineWidth=document.getElementById("slider").value
+       }
+
+       function change(value)
+       {
+        ctx.strokeStyle=value;
+       }
+
+       canvas.addEventListener("mousedown",startDraw);
+       canvas.addEventListener("mouseup",endDraw);
+       canvas.addEventListener("mousemove",draw);
+
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administrator</title>
+</head>
+<body>
+<canvas id="canvas" style="border: 2px solid black;">Your Browser Does Not Support Canvas </canvas>
+<div style="height :50px;width:50px;display:inline-block;margin: 5px;background-color:green;"onclick="change('green')" ></div>  
+<div style="height :50px;width:50px;display:inline-block;margin: 5px;background-color:blue;" onclick="change('blue')"></div>
+<input type="range" max="20" min="1" oninput="changeWidth()" id="slider" value="3"><br>
+<script>
+        var canvas = document.getElementById("canvas");
+        var ctx =canvas.getContext("2d");
+let ws =new WebSocket("ws://localhost:5000");
+ws.onmessage=function(message){
+    var info=JSON.parse(message.data);
+    if(info.paint==0)
+    endDraw()
+    if(info.paint==1)
+    startDraw()
+    if(info.paint==2)
+    {
+    ctx.lineWidth=info.width;
+    ctx.strokeStyle=info.style;
+    draw(info.x,info.y)
+
+    }
+}
+
+    
+canvas.height =window.innerHeight*0.7;
+canvas.width =window.innerWidth;
+
+
+        window.addEventListener("resize", ()=>{
+        canvas.height=window.innerHeight*0.7;
+        canvas.width=window.innerWidth;
+
+        })
+       let paint = false;
+ 
+       function startDraw()
+       {
+        paint=true;
+        var info={
+            width:ctx.lineWidth,
+            style:ctx.strokeStyle,
+            x:event.clientX,
+            y:event.clientY,
+            paint:1
+        }
+        ws.send(JSON.stringify(info));
+       }
+       function endDraw()
+       {
+        paint=false;
+        ctx.beginPath();
+        var info={
+            width:ctx.lineWidth,
+            style:ctx.strokeStyle,
+            x:event.clientX,
+            y:event.clientY,
+            paint:0
+        }
+        ws.send(JSON.stringify(info));
+       }
+
+       function draw(x,y)
+       {
+        if(!paint)
+        return;
+        ctx.lineCap='round'
+        ctx.lineTo(x,y);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(x,y);
+        var info={
+            width:ctx.lineWidth,
+            style:ctx.strokeStyle,
+            x:event.clientX,
+            y:event.clientY,
+            paint:2
+        }
+        ws.send(JSON.stringify(info));
+       }
+       function changeWidth()
+       {
+        ctx.lineWidth=document.getElementById("slider").value
+       }
+
+       function change(value)
+       {
+        ctx.strokeStyle=value;
+       }
+
+    </script>
+</body>
+</html>
